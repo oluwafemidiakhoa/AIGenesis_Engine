@@ -23,6 +23,9 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV FLASK_CONFIG prod
 
+# Add the non-root user's local bin to the PATH
+ENV PATH="/home/nonroot/.local/bin:${PATH}"
+
 # Create a non-root user and group for security
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 
