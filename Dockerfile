@@ -1,37 +1,36 @@
-# ───────────── Stage 1: Build CSS with Tailwind ─────────────
-FROM node:18-alpine AS tailwind-builder
+# Stage 1: Build frontend assets
+FROM node:18-slim as frontend-builder
 
-# Set working directory
 WORKDIR /app
 
-# Install Tailwind
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy Tailwind input source
-COPY ./app/static/css ./app/static/css
+# Copy the rest of the frontend source code
+COPY . .
 
-# Run Tailwind build
-RUN npx tailwindcss -i ./app/static/css/input.css -o ./app/static/css/output.css
+# Build the CSS. This runs the "build" script from your package.json
+RUN npm run build
 
-# ───────────── Stage 2: Python backend ─────────────
+# Stage 2: Setup the Python application
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Environment settings
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Install Python dependencies
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app source code
+# Copy the application code
 COPY . .
 
-# Bring over the compiled CSS
-COPY --from=tailwind-builder /app/app/static/css/output.css ./app/static/css/output.css
+# Copy the built static assets from the previous stage
+COPY --from=frontend-builder /app/app/static/css/output.css ./app/static/css/output.css
 
-# Entrypoint for Render
+# The command to run the application (Render will use the PORT environment variable)
 CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "wsgi:app"]
