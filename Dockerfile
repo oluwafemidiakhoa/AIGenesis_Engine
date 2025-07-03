@@ -48,6 +48,7 @@ RUN chmod +x entrypoint.sh
 # Copy the built static assets from the previous stage
 COPY --from=frontend-builder --chown=nonroot:nonroot /app/app/static/css/output.css ./app/static/css/output.css
 
+<<<<<<< HEAD
 # Switch to the non-root user for running the application
 USER nonroot
 
@@ -58,3 +59,7 @@ ENTRYPOINT ["./entrypoint.sh"]
 # It must be in "exec" form (using JSON array syntax) for the ENTRYPOINT to work correctly.
 # We use /bin/sh -c to ensure environment variables like $PORT are expanded.
 CMD ["/bin/sh", "-c", "gunicorn --bind 0.0.0.0:$PORT wsgi:app"]
+=======
+# The command to run the application (Render will use the PORT environment variable)
+CMD gunicorn --bind 0.0.0.0:$PORT wsgi:app
+>>>>>>> e7e7325 (Fix: Use shell form for CMD in Dockerfile)
