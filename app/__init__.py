@@ -30,10 +30,12 @@ def create_app(config_name='dev'):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(app_config)
 
-    # Initialize Sentry if a DSN is provided
-    if app.config['SENTRY_DSN']:
+    # Initialize Sentry if a DSN is provided and looks valid.
+    # This prevents the app from crashing if the env var is set to an empty or invalid string.
+    sentry_dsn = app.config.get('SENTRY_DSN')
+    if sentry_dsn and sentry_dsn.startswith('http'):
         sentry_sdk.init(
-            dsn=app.config['SENTRY_DSN'],
+            dsn=sentry_dsn,
             # Enable performance monitoring
             enable_tracing=True,
             # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
