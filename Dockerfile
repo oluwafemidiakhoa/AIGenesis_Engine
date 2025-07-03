@@ -47,6 +47,11 @@ COPY --from=frontend-builder --chown=nonroot:nonroot /app/app/static/css/output.
 # Expose the port the app will run on
 EXPOSE 5000
 
+# Add a healthcheck to ensure the application is running correctly.
+# Render uses its own health check, but this is good practice for portability.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5000/ || exit 1
+
 # Switch to the non-root user for running the application
 USER nonroot
 
