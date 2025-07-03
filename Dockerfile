@@ -1,28 +1,25 @@
-# ────────────────────────────────────────────────────────────────
-# Stage 1: Build frontend assets
-# ────────────────────────────────────────────────────────────────
-FROM node:18-alpine AS frontend-builder
+# ───────────── Stage 1: Build CSS with Tailwind ─────────────
+FROM node:18-alpine AS tailwind-builder
 
+# Set working directory
 WORKDIR /app
 
-# Install frontend dependencies
+# Install Tailwind
 COPY package*.json ./
 RUN npm install
 
-# Copy frontend source files
-COPY . .
+# Copy Tailwind input source
+COPY ./app/static/css ./app/static/css
 
-# Run build script (must be defined in package.json)
-RUN npm run build
+# Run Tailwind build
+RUN npx tailwindcss -i ./app/static/css/input.css -o ./app/static/css/output.css
 
-# ────────────────────────────────────────────────────────────────
-# Stage 2: Setup and run Python app
-# ────────────────────────────────────────────────────────────────
+# ───────────── Stage 2: Python backend ─────────────
 FROM python:3.10-slim
 
 WORKDIR /app
 
-# Environment config
+# Environment settings
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -30,11 +27,11 @@ ENV PYTHONUNBUFFERED=1
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy backend source files
+# Copy app source code
 COPY . .
 
-# Copy built frontend assets (only CSS here)
-COPY --from=frontend-builder /app/app/static/css/output.css ./app/static/css/output.css
+# Bring over the compiled CSS
+COPY --from=tailwind-builder /app/app/static/css/output.css ./app/static/css/output.css
 
-# Entrypoint (Render sets the $PORT env variable automatically)
+# Entrypoint for Render
 CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "wsgi:app"]
