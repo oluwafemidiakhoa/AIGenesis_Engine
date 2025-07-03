@@ -28,7 +28,12 @@ RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 
 # Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Create the instance folder and set permissions before switching user
+RUN mkdir /app/instance
+RUN chown nonroot:nonroot /app/instance
 
 # Copy the application code
 COPY --chown=nonroot:nonroot . .
