@@ -1,0 +1,11 @@
+Dear {{ user.email }},
+
+Welcome to AI Genesis Engine! To confirm your account, please visit the following link:
+{{ url_for('auth.confirm', token=token, _external=True) }}
+
+This link will expire in one hour.
+
+If you did not sign up for an account, please ignore this email.
+
+Sincerely,
+The AI Genesis Engine Team

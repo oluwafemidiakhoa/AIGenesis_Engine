@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # The Redis service for Celery's message broker
+  redis:
+    image: "redis:6-alpine"
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # The Flask web application service
+  web:
+    build: .
+    # The command to start the Flask development server
+    command: python run.py
+    volumes:
+      # Mount the current directory into the container for live code reloading
+      - .:/app
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  # The Celery worker service
+  worker:
+    build: .
+    command: celery -A celery_worker.celery worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis

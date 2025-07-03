@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800">Welcome to your Dashboard, {{ current_user.email }}!</h1>
+
+<div class="mt-8 bg-white p-8 rounded-lg shadow-lg">
+    <h2 class="text-2xl font-bold text-gray-700">Your Account Status</h2>
+    <div class="mt-4">
+        {% if current_user.is_subscribed %}
+            <p class="text-green-600 font-semibold">You have an active subscription. Thank you for your support!</p>
+            <div class="mt-4">
+                <form action="{{ url_for('payments.customer_portal') }}" method="POST">
+                    <button type="submit" class="bg-gray-500 text-white font-bold rounded-md py-2 px-4 hover:bg-gray-600">Manage Subscription</button>
+                </form>
+            </div>
+            <div class="mt-6 border-t pt-6">
+                <h3 class="text-xl font-bold text-gray-700">Premium Features</h3>
+                <p class="mt-2 text-gray-600">Access exclusive features available only to subscribers.</p>
+                <a href="{{ url_for('features.generate_text') }}" class="mt-4 inline-block text-blue-600 hover:underline">→ Try the AI Text Generator</a>
+            </div>
+            <div class="mt-6 border-t pt-6">
+                <h3 class="text-xl font-bold text-gray-700">Your API Key</h3>
+                <p class="mt-2 text-gray-600">Use this key in an Authorization header to access our API (e.g., `Bearer YOUR_KEY`).</p>
+                <div class="mt-2 p-3 bg-gray-100 rounded-md font-mono text-sm break-all">
+                    {{ current_user.api_key }}
+                </div>
+            </div>
+        {% else %}
+            <p class="text-yellow-600 font-semibold">You do not have an active subscription.</p>
+            <div class="mt-4">
+                <form action="{{ url_for('payments.create_checkout_session') }}" method="POST">
+                    <button type="submit" class="bg-blue-600 text-white font-bold rounded-md py-2 px-4 hover:bg-blue-700">Upgrade Now</button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

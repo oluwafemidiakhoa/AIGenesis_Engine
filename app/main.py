@@ -1,19 +1,19 @@
 # app/main.py
 
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, redirect, url_for
+from flask_login import current_user, login_required
 
 main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    # THE FIX: Pass the host URL to the template so JavaScript knows where to send the request.
-    host_url = request.host_url
-    return render_template('index.html', host_url=host_url)
+    """Serves the landing page if the user is not authenticated, otherwise redirects to the dashboard."""
+    if current_user.is_authenticated:
+        return redirect(url_for('main.dashboard'))
+    return render_template('landing_page.html')
 
-@main.route('/success')
-def success():
-    return render_template('success.html')
-
-@main.route('/cancel')
-def cancel():
-    return render_template('cancel.html')
+@main.route('/dashboard')
+@login_required
+def dashboard():
+    """Serves the user's dashboard, accessible only to logged-in users."""
+    return render_template('dashboard.html')

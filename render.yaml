@@ -10,6 +10,14 @@ services:
     postgresMajorVersion: 16
     region: oregon # Make sure this matches your web service region
 
+  # Service 3: The Redis instance for Celery
+  # This provides the message broker for our background tasks.
+  - type: redis
+    name: ai-genesis-redis
+    plan: free
+    region: oregon
+    ipAllowList: [] # Allows other services in the account to connect
+
   # Service 2: The Flask Web Service
   # This defines our main application, built from the Dockerfile.
   - type: web
@@ -35,6 +43,18 @@ services:
           property: connectionString
         key: DATABASE_URL
       
+      # This links the Redis instance to our services.
+      - fromService:
+          type: redis
+          name: ai-genesis-redis
+          property: connectionString
+        key: CELERY_BROKER_URL
+      - fromService:
+          type: redis
+          name: ai-genesis-redis
+          property: connectionString
+        key: CELERY_RESULT_BACKEND
+      
       # We tell Render that all these other keys will be provided manually
       # in the dashboard secrets. 'sync: false' prevents Render from overwriting them.
       - key: SECRET_KEY
@@ -50,4 +70,56 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: GOOGLE_API_KEY
+        sync: false
+      - key: HF_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  # Service 4: The Celery Worker
+  # This service runs the background tasks.
+  - type: worker
+    name: ai-genesis-worker
+    runtime: docker
+    region: oregon
+    plan: free
+
+    # The command to start the Celery worker.
+    # This points to the 'celery' object inside the 'app' module.
+    startCommand: "celery -A app.celery worker --loglevel=info"
+
+    envVars:
+      - key: FLASK_CONFIG
+        value: prod
+      - fromDatabase:
+          name: ai-genesis-db
+          property: connectionString
+        key: DATABASE_URL
+      - fromService:
+          type: redis
+          name: ai-genesis-redis
+          property: connectionString
+        key: CELERY_BROKER_URL
+      - fromService:
+          type: redis
+          name: ai-genesis-redis
+          property: connectionString
+        key: CELERY_RESULT_BACKEND
+      - key: SECRET_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: HF_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+      - key: SENTRY_DSN
         sync: false

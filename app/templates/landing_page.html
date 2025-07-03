@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to AI Genesis Engine{% endblock %}
+
+{% block content %}
+<div class="text-center py-16">
+    <h1 class="text-5xl font-extrabold text-gray-900">
+        Build Your Next SaaS with AI Genesis Engine
+    </h1>
+    <p class="mt-4 text-xl text-gray-600">
+        The ultimate boilerplate to kickstart your subscription-based application.
+    </p>
+    <div class="mt-8">
+        <a href="{{ url_for('auth.register') }}" class="bg-blue-600 text-white font-bold rounded-full py-4 px-8 shadow-lg uppercase tracking-wider hover:bg-blue-700 transition-transform transform hover:scale-105">
+            Get Started for Free
+        </a>
+    </div>
+</div>
+
+<div class="mt-16">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">Core Features Included</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+        <div class="rounded-lg shadow-lg p-8 bg-white">
+            <h3 class="font-bold text-xl text-gray-800">Payments Ready</h3>
+            <p class="mt-2 text-gray-600">Stripe integration for subscriptions and customer portal out of the box.</p>
+        </div>
+        <div class="rounded-lg shadow-lg p-8 bg-white">
+            <h3 class="font-bold text-xl text-gray-800">Authentication</h3>
+            <p class="mt-2 text-gray-600">Secure user registration, login, and password reset flows are already built.</p>
+        </div>
+        <div class="rounded-lg shadow-lg p-8 bg-white">
+            <h3 class="font-bold text-xl text-gray-800">Admin Panel</h3>
+            <p class="mt-2 text-gray-600">Manage your users and application data through a secure admin interface.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

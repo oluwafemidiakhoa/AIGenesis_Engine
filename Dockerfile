@@ -1,19 +1,36 @@
-FROM python:3.9-slim
+# Stage 1: Build frontend assets
+FROM node:18-alpine as frontend-builder
 
-WORKDIR /code
+WORKDIR /app
 
-# Copy requirements and install them
-COPY ./requirements.txt /code/requirements.txt
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm install
 
-# Copy all our application files
-COPY . /code/
+# Copy the rest of the frontend source code
+COPY . .
 
-# Make our entrypoint script executable
-RUN chmod +x /code/entrypoint.sh
+# Build the CSS. This runs the "build" script from your package.json
+RUN npm run build
 
-# Expose the port
-EXPOSE 8000
+# Stage 2: Setup the Python application
+FROM python:3.10-slim
 
-# Set the entrypoint script as the command to run when the container starts
-ENTRYPOINT ["/code/entrypoint.sh"]
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the application code
+COPY . .
+
+# Copy the built static assets from the previous stage
+COPY --from=frontend-builder /app/app/static/css/output.css ./app/static/css/output.css
+
+# The command to run the application (Render will use the PORT environment variable)
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "wsgi:app"]

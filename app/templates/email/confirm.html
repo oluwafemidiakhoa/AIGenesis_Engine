@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Your Account</title>
+</head>
+<body>
+    <p>Dear {{ user.email }},</p>
+    <p>
+        Welcome to AI Genesis Engine! To confirm your account, please click the following link:
+        <a href="{{ url_for('auth.confirm', token=token, _external=True) }}">
+            Confirm My Account
+        </a>
+    </p>
+    <p>This link will expire in one hour.</p>
+    <p>Sincerely,</p>
+    <p>The AI Genesis Engine Team</p>
+</body>
+</html>

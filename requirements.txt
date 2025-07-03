@@ -1,11 +1,37 @@
-gradio
-openai 
-google-generativeai 
-beautifulsoup4 
-requests
+# Core Flask and extensions
 Flask
 Flask-SQLAlchemy
-python-dotenv
-stripe
+Flask-Login
+Flask-Admin
+Flask-Migrate
+Flask-Mail
+
+# Database driver
 psycopg2-binary
+
+# Payments
+stripe
+
+# Background Tasks
+celery
+redis
+
+# WSGI Server
 gunicorn
+
+# AI SDKs
+openai
+
+# Utilities
+python-dotenv
+itsdangerous
+click
+requests
+
+# Testing
+pytest
+pytest-flask
+pytest-mock
+
+# Monitoring
+sentry-sdk[flask]
