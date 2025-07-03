@@ -51,17 +51,6 @@ def create_app(config_name='dev'):
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
 
-    # Use the instance path from the config object
-    # This ensures it points to a writable directory like /data/instance
-    instance_path = app.instance_path
-    if not os.path.exists(instance_path):
-        try:
-            os.makedirs(instance_path)
-        except OSError as e:
-            # Handle potential race conditions in a multi-worker environment
-            if not os.path.isdir(instance_path):
-                raise e
-    
     db.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
