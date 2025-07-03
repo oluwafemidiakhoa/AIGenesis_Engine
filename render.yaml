@@ -29,6 +29,10 @@ services:
     # This tells Render what to check to see if your app is healthy and running.
     healthCheckPath: /
     
+    # This command runs on every new deploy, BEFORE the new version goes live.
+    # This is the perfect place to run database migrations.
+    preDeployCommand: "flask db upgrade"
+
     # This section defines the environment variables for your web service.
     envVars:
       # This forces Flask to run in a production-ready mode.
@@ -87,8 +91,9 @@ services:
     plan: free
 
     # The command to start the Celery worker.
-    # This points to the 'celery' object inside the 'app' module.
-    startCommand: "celery -A app.celery worker --loglevel=info"
+    # This now points to the 'celery' object within our configured app instance
+    # defined in celery_worker.py, ensuring it loads the full app config.
+    startCommand: "celery -A celery_worker.celery worker --loglevel=info"
 
     envVars:
       - key: FLASK_CONFIG
@@ -109,7 +114,11 @@ services:
         key: CELERY_RESULT_BACKEND
       - key: SECRET_KEY
         sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
       - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
