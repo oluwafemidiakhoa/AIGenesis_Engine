@@ -4,7 +4,11 @@
   "description": "A world-class SaaS boilerplate.",
   "scripts": {
     "build": "npx tailwindcss -i ./app/static/css/input.css -o ./app/static/css/output.css",
+<<<<<<< HEAD
     "dev": "npx tailwindcss -i ./app/static/css/input.css -o ./app/static/css/output.css --watch"
+=======
+    "dev": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/output.css --watch"
+>>>>>>> 68a9f53 (Update config files and add new environment examples)
   },
   "devDependencies": {
     "tailwindcss": "^3.4.1"

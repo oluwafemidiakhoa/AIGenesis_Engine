@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+<<<<<<< HEAD
 
 # Node
 node_modules
@@ -19,3 +20,7 @@ npm-debug.log
 # OS
 .DS_Store
 Thumbs.db
+=======
+.env
+node_modules/
+>>>>>>> 68a9f53 (Update config files and add new environment examples)

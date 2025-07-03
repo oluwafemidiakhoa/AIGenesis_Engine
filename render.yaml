@@ -127,6 +127,53 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID
         sync: false
+<<<<<<< HEAD
+=======
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: HF_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  # Service 5: Database Migrations Job
+  # This is a one-off job that runs on every new deploy to apply database changes.
+  - type: job
+    name: ai-genesis-migrations
+    runtime: docker
+    startCommand: "flask db upgrade"
+    envVars:
+      - key: FLASK_CONFIG
+        value: prod
+      - fromDatabase:
+          name: ai-genesis-db
+          property: connectionString
+        key: DATABASE_URL
+      - fromService:
+          type: redis
+          name: ai-genesis-redis
+          property: connectionString
+        key: CELERY_BROKER_URL
+      - fromService:
+          type: redis
+          name: ai-genesis-redis
+          property: connectionString
+        key: CELERY_RESULT_BACKEND
+      - key: SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+>>>>>>> 68a9f53 (Update config files and add new environment examples)
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: OPENAI_API_KEY
