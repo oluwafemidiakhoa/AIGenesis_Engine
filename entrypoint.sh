@@ -1,12 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e
 
-# The 'web' service is designated to run migrations.
-if [ "$SERVICE_TYPE" = "web" ]; then
-  echo "--- [Entrypoint] Running database migrations for web service ---"
-  flask db upgrade
-  echo "--- [Entrypoint] Migrations complete ---"
-fi
+echo "===> Running DB migrations …"
+flask db upgrade
+echo "===> DB migrations done"
 
-# Now, execute the command passed into the script (from the Dockerfile's CMD)
-exec "$@"
+echo "===> Starting Gunicorn on $PORT"
+exec gunicorn --log-level debug --bind 0.0.0.0:$PORT wsgi:app
