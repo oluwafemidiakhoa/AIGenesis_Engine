@@ -66,6 +66,17 @@ class User(UserMixin, db.Model):
     # Relationships
     memberships = db.relationship('Membership', back_populates='user', cascade="all, delete-orphan")
 
+    @property
+    def current_organization(self) -> Optional[Organization]:
+        """
+        Returns the user's first organization.
+        
+        NOTE: This is a simplification for a single-organization-per-user setup.
+        In a multi-organization app, this would need to be more sophisticated
+        (e.g., based on a user's session or a default setting).
+        """
+        return self.memberships[0].organization if self.memberships else None
+
     def __repr__(self) -> str:
         return f'<User {self.email}>'
 
