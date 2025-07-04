@@ -5,7 +5,7 @@ services:
   # Service 1: The PostgreSQL Database
   # This tells Render to create a free-tier managed database for us.
   - type: pserv
-    name: ai-genesis-db
+    name: ai-genesis-dbnew
     plan: free
     postgresMajorVersion: 16
     region: oregon # Make sure this matches your web service region
@@ -38,12 +38,14 @@ services:
       # This forces Flask to run in a production-ready mode.
       - key: FLASK_CONFIG
         value: prod
+      - key: FLASK_APP
+        value: app
       
       # This is the MAGIC line. It links the database to the web service.
       # It takes the connection string from the 'ai-genesis-db' service defined above
       # and makes it available to our app as the 'DATABASE_URL' environment variable.
       - fromDatabase:
-          name: ai-genesis-db
+          name: ai-genesis-dbnew
           property: connectionString
         key: DATABASE_URL
       
@@ -99,7 +101,7 @@ services:
       - key: FLASK_CONFIG
         value: prod
       - fromDatabase:
-          name: ai-genesis-db
+          name: ai-genesis-dbnew
           property: connectionString
         key: DATABASE_URL
       - fromService:
