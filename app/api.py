@@ -19,7 +19,8 @@ def status():
 @api_key_required
 def generate():
     """A premium API endpoint for generating text."""
-    if not g.current_user.is_subscribed:
+    org = g.current_user.current_organization
+    if not org or not org.is_subscribed:
         return jsonify({'error': 'This endpoint requires an active subscription.'}), 403
 
     prompt = request.json.get('prompt')
