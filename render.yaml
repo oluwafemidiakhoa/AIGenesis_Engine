@@ -31,9 +31,8 @@ services:
     
     # This command runs on every new deploy, BEFORE the new version goes live.
     # This is the perfect place to run database migrations.
-    # preDeployCommand is not supported on the free plan. We run migrations in the startCommand instead.
-    # preDeployCommand: "./migrate.sh"
-    startCommand: "./migrate.sh && gunicorn -b 0.0.0.0:10000 wsgi:app"
+    # The start command is now handled by the ENTRYPOINT in the Dockerfile,
+    # which ensures migrations run before the server starts.
 
     # This section defines the environment variables for your web service.
     envVars:
@@ -102,6 +101,8 @@ services:
     envVars:
       - key: FLASK_CONFIG
         value: prod
+      - key: FLASK_APP
+        value: app
       - fromDatabase:
           name: ai-genesis-dbnew
           property: connectionString
