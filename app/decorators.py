@@ -12,7 +12,8 @@ def subscription_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not current_user.is_subscribed:
+        org = current_user.current_organization
+        if not org or not org.is_subscribed:
             flash('This feature requires an active subscription.', 'warning')
             return redirect(url_for('main.dashboard'))
         return f(*args, **kwargs)
@@ -30,9 +31,8 @@ def role_required(role="owner"):
                 flash("You are not part of any organization.", "error")
                 return redirect(url_for('main.dashboard'))
 
-            # This is a simple way to get the role for the current org.
-            # In a more complex multi-org app, you'd find the specific membership.
-            membership = current_user.memberships[0] if current_user.memberships else None
+            # Find the membership for the current organization
+            membership = next((m for m in current_user.memberships if m.organization_id == org.id), None)
             
             # For simplicity, we'll check for a single role. This could be a list.
             if not membership or membership.role != role:
