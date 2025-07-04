@@ -4,7 +4,7 @@
 services:
   # Service 1: The PostgreSQL Database
   # This tells Render to create a free-tier managed database for us.
-  - type: pserv
+  - type: db
     name: ai-genesis-dbnew
     plan: free
     postgresMajorVersion: 16
@@ -99,6 +99,8 @@ services:
     envVars:
       - key: FLASK_CONFIG
         value: prod
+      - key: FLASK_APP
+        value: app
       - fromDatabase:
           name: ai-genesis-dbnew
           property: connectionString
