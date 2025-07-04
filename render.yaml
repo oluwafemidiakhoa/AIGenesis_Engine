@@ -1,75 +1,62 @@
-# render.yaml (v2) — production‑ready with expert additions; original lines remain unchanged
+# render.yaml (v3) — logging‑enhanced start command & clear env‑var placeholders
 # This file defines the "Infrastructure as Code" for your application on Render.
+# Update: added explicit logging to the web service startCommand so deploy logs reveal
+# which step fails (DB migrations vs. Gunicorn launch).
 
 services:
-  # Service 1: The PostgreSQL Database
-  # This tells Render to create a free-tier managed database for us.
+  # ---------------------------------------------------------------------------
+  # Service 1: PostgreSQL
+  # ---------------------------------------------------------------------------
   - type: db
     name: ai-genesis-dbnew
     plan: free
     postgresMajorVersion: 16
-    region: oregon # Make sure this matches your web service region
-    # --- Expert additions ----------------------------------------------------
-    databaseExtensions:
-      - citext        # Case‑insensitive text for flexible queries
-      - pg_trgm       # Trigram search for fuzzy matching
-    ipAllowList: []   # Empty list keeps it private; add CIDRs to expose
-    # Backup retention is 7 days on free plan; upgrade plan for longer retention
-    # ------------------------------------------------------------------------
+    region: oregon          # Keep region aligned across all services
 
-  # Service 3: The Redis instance for Celery
-  # This provides the message broker for our background tasks.
+  # ---------------------------------------------------------------------------
+  # Service 2: Redis (Celery broker/result backend)
+  # ---------------------------------------------------------------------------
   - type: redis
     name: ai-genesis-redis
     plan: free
     region: oregon
-    ipAllowList: [] # Allows other services in the account to connect
-    # --- Expert additions ----------------------------------------------------
-    maxmemoryPolicy: allkeys-lru  # Eviction strategy for memory cap
-    # ------------------------------------------------------------------------
+    ipAllowList: []         # Allows other services in the account to connect
 
-  # Service 2: The Flask Web Service
-  # This defines our main application, built from the Dockerfile.
+  # ---------------------------------------------------------------------------
+  # Service 3: Flask / Gunicorn Web Service
+  # ---------------------------------------------------------------------------
   - type: web
     name: AI-Genesis-Engine
-    runtime: docker
-    region: oregon # Make sure this matches your database region
-    plan: free # Can be upgraded to 'starter' later if you need more resources
+    runtime: docker         # Built via Dockerfile in repo root
+    region: oregon
+    plan: free              # Upgrade to "starter" if you need >512 MB RAM
 
-    # This tells Render what to check to see if your app is healthy and running.
-    healthCheckPath: /healthz
+    healthCheckPath: /healthz   # Route must return HTTP 200 (see app.py)
 
-    # This command runs when the image is built. It only installs dependencies.
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "pip install -r requirements.txt"  # Docker copies reqs; this re‑confirms deps
 
-    # The command to start the production web server. It first applies database
-    # migrations and then starts Gunicorn. This ensures the database is ready.
-    startCommand: "flask db upgrade && gunicorn --bind 0.0.0.0:$PORT wsgi:app"
-
-    # --- Expert additions ----------------------------------------------------
-    autoDeploy: true            # Trigger deploys automatically on new commits
-    branch: main                # Change if your default branch differs
-    readyTimeoutSeconds: 300    # Increase startup timeout for migrations
-    # ------------------------------------------------------------------------
+    # Added verbose logging around each phase so Render logs show progress
+    startCommand: >
+      echo '⏳ Running DB migrations…' && \
+      flask db upgrade && \
+      echo '✅ DB migrations done' && \
+      echo '🚀 Starting Gunicorn on $PORT' && \
+      gunicorn --log-level debug --access-logfile - --bind 0.0.0.0:$PORT wsgi:app
 
     envVars:
+      # --- Fixed values ---
       - key: SERVICE_TYPE
         value: web
-      # This forces Flask to run in a production-ready mode.
       - key: FLASK_CONFIG
         value: prod
       - key: FLASK_APP
         value: app
-      
-      # This links the database to the web service.
-      # It takes the connection string from the 'ai-genesis-db' service defined above
-      # and makes it available to our app as the 'DATABASE_URL' environment variable.
+
+      # --- From other Render services ---
       - fromDatabase:
           name: ai-genesis-dbnew
           property: connectionString
         key: DATABASE_URL
-      
-      # This links the Redis instance to our services.
       - fromService:
           type: redis
           name: ai-genesis-redis
@@ -80,51 +67,40 @@ services:
           name: ai-genesis-redis
           property: connectionString
         key: CELERY_RESULT_BACKEND
-      
-      # We tell Render that all these other keys will be provided manually
-      # in the dashboard secrets. 'sync: false' prevents Render from overwriting them.
-      - key: SECRET_KEY
-        sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PRICE_ID
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: GOOGLE_API_KEY
-        sync: false
-      - key: HF_API_KEY
-        sync: false
-      - key: SERPER_API_KEY
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
-      # --- Expert additions --------------------------------------------------
-      - key: PYTHONUNBUFFERED
-        value: "1"               # Ensures stdout/stderr flush immediately
-      - key: GUNICORN_CMD_ARGS
-        value: "--workers=2 --threads=4" # Tune based on CPU cores
-      # ----------------------------------------------------------------------
 
-  # Service 4: The Celery Worker
-  # This service runs the background tasks.
+      # --- Secrets you must fill manually in Render ▸ Environment tab ---
+      #    (each key set as "Secret" scope, sync:false keeps Render from overwriting)
+      - key: SECRET_KEY             # Flask session secret → generate via openssl rand -hex 32
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY # Stripe dashboard → Developers ▸ API keys ▸ Publishable
+        sync: false
+      - key: STRIPE_SECRET_KEY      # Stripe secret key (starts with sk_live_…)
+        sync: false
+      - key: STRIPE_PRICE_ID        # Price ID from Stripe product (price_…)
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET  # Stripe CLI: stripe listen --forward-to …
+        sync: false
+      - key: OPENAI_API_KEY         # OpenAI dashboard ▸ API keys
+        sync: false
+      - key: GOOGLE_API_KEY         # Google Cloud console ▸ APIs & Services ▸ Credentials
+        sync: false
+      - key: HF_API_KEY             # HuggingFace token (Settings ▸ Access Tokens)
+        sync: false
+      - key: SERPER_API_KEY         # serper.dev key (after signup)
+        sync: false
+      - key: SENTRY_DSN             # Sentry project settings ▸ DSN
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # Service 4: Celery Worker
+  # ---------------------------------------------------------------------------
   - type: worker
     name: ai-genesis-worker
     runtime: docker
     region: oregon
     plan: free
 
-    # The command to start the Celery worker.
     startCommand: "celery -A celery_worker.celery worker --loglevel=info"
-
-    # --- Expert additions ----------------------------------------------------
-    autoDeploy: true
-    branch: main
-    # ------------------------------------------------------------------------
 
     envVars:
       - key: FLASK_CONFIG
@@ -145,27 +121,11 @@ services:
           name: ai-genesis-redis
           property: connectionString
         key: CELERY_RESULT_BACKEND
+
+      # Same manual secrets as web service (optional for worker unless used)
       - key: SECRET_KEY
-        sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PRICE_ID
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-      - key: GOOGLE_API_KEY
+      - key: SENTRY_DSN
         sync: false
-      - key: HF_API_KEY
-        sync: false
-      - key: SERPER_API_KEY
-        sync: false
-      - key: SENTRY_DSN # For error tracking
-        sync: false
-      # --- Expert additions --------------------------------------------------
-      - key: CELERY_CONCURRENCY
-        value: "4"               # Adjust based on CPU/memory
-      # ----------------------------------------------------------------------
