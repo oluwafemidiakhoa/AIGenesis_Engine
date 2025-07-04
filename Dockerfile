@@ -38,14 +38,18 @@ RUN pip install --upgrade pip && \
 RUN mkdir /app/instance
 RUN chown nonroot:nonroot /app/instance
 
-# Copy the application code
+# Copy the application code and entrypoint script
 COPY --chown=nonroot:nonroot . .
+RUN chmod +x entrypoint.sh
 
 # Copy the built static assets from the previous stage
 COPY --from=frontend-builder --chown=nonroot:nonroot /app/app/static/css/output.css ./app/static/css/output.css
 
 # Switch to the non-root user for running the application
 USER nonroot
+
+# The entrypoint script will run migrations (if applicable) and then execute the CMD
+ENTRYPOINT ["./entrypoint.sh"]
 
 # The command to run the application (Render will use the PORT environment variable)
 CMD gunicorn --bind 0.0.0.0:$PORT wsgi:app
