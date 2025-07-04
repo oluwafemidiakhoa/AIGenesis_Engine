@@ -33,6 +33,10 @@ services:
     # runs the database migrations to ensure the schema is up-to-date.
     buildCommand: "pip install -r requirements.txt && flask db upgrade"
 
+    # The command to start the production web server.
+    # It uses Gunicorn to run the app defined in our new wsgi.py file.
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT wsgi:app"
+
     envVars:
       - key: SERVICE_TYPE
         value: web
