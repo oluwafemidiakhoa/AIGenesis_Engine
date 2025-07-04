@@ -29,13 +29,12 @@ services:
     # This tells Render what to check to see if your app is healthy and running.
     healthCheckPath: /healthz
 
-    # This command runs on every new deploy. It installs dependencies and then
-    # runs the database migrations to ensure the schema is up-to-date.
-    buildCommand: "pip install -r requirements.txt && flask db upgrade"
+    # This command runs when the image is built. It only installs dependencies.
+    buildCommand: "pip install -r requirements.txt"
 
-    # The command to start the production web server.
-    # It uses Gunicorn to run the app defined in our new wsgi.py file.
-    startCommand: "gunicorn --bind 0.0.0.0:$PORT wsgi:app"
+    # The command to start the production web server. It first applies database
+    # migrations and then starts Gunicorn. This ensures the database is ready.
+    startCommand: "flask db upgrade && gunicorn --bind 0.0.0.0:$PORT wsgi:app"
 
     envVars:
       - key: SERVICE_TYPE
