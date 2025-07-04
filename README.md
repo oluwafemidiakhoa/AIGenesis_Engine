@@ -49,8 +49,10 @@ Now, open the `.env` file and add your credentials for Stripe, your email provid
 
 Use Docker Compose to build the images and start all the services (Flask Web App, Celery Worker, Redis).
 
+> **Note**: The first time you run this, it may take a few minutes to download the base images and build the application container.
+
 ```bash
-docker-compose up --build
+docker-compose up --build -d
 ```
 
 Your SaaS application is now running!
