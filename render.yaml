@@ -31,7 +31,7 @@ services:
     
     # This command runs on every new deploy, BEFORE the new version goes live.
     # This is the perfect place to run database migrations.
-    preDeployCommand: "flask db upgrade"
+    preDeployCommand: "./migrate.sh"
 
     # This section defines the environment variables for your web service.
     envVars:
