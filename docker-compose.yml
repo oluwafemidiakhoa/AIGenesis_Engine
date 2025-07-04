@@ -1,6 +1,16 @@
 version: '3.8'
 
 services:
+  # The PostgreSQL Database service
+  db:
+    image: postgres:13-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file:
+      - .env # for POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+    ports:
+      - "5432:5432"
+
   # The Redis service for Celery's message broker
   redis:
     image: "redis:6-alpine"
@@ -22,6 +32,7 @@ services:
       - .env
     depends_on:
       - redis
+      - db
 
   # The Celery worker service
   worker:
@@ -33,3 +44,7 @@ services:
       - .env
     depends_on:
       - redis
+      - db
+
+volumes:
+  postgres_data:
