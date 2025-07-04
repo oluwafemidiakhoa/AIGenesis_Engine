@@ -121,7 +121,6 @@ services:
         sync: false
       - key: STRIPE_PRICE_ID
         sync: false
->>>>>>> 68a9f53 (Update config files and add new environment examples)
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: OPENAI_API_KEY
