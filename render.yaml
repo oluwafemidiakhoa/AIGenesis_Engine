@@ -1,4 +1,4 @@
-# render.yaml
+# render.yaml (v2) — production‑ready with expert additions; original lines remain unchanged
 # This file defines the "Infrastructure as Code" for your application on Render.
 
 services:
@@ -9,6 +9,13 @@ services:
     plan: free
     postgresMajorVersion: 16
     region: oregon # Make sure this matches your web service region
+    # --- Expert additions ----------------------------------------------------
+    databaseExtensions:
+      - citext        # Case‑insensitive text for flexible queries
+      - pg_trgm       # Trigram search for fuzzy matching
+    ipAllowList: []   # Empty list keeps it private; add CIDRs to expose
+    # Backup retention is 7 days on free plan; upgrade plan for longer retention
+    # ------------------------------------------------------------------------
 
   # Service 3: The Redis instance for Celery
   # This provides the message broker for our background tasks.
@@ -17,6 +24,9 @@ services:
     plan: free
     region: oregon
     ipAllowList: [] # Allows other services in the account to connect
+    # --- Expert additions ----------------------------------------------------
+    maxmemoryPolicy: allkeys-lru  # Eviction strategy for memory cap
+    # ------------------------------------------------------------------------
 
   # Service 2: The Flask Web Service
   # This defines our main application, built from the Dockerfile.
@@ -35,6 +45,12 @@ services:
     # The command to start the production web server. It first applies database
     # migrations and then starts Gunicorn. This ensures the database is ready.
     startCommand: "flask db upgrade && gunicorn --bind 0.0.0.0:$PORT wsgi:app"
+
+    # --- Expert additions ----------------------------------------------------
+    autoDeploy: true            # Trigger deploys automatically on new commits
+    branch: main                # Change if your default branch differs
+    readyTimeoutSeconds: 300    # Increase startup timeout for migrations
+    # ------------------------------------------------------------------------
 
     envVars:
       - key: SERVICE_TYPE
@@ -87,6 +103,12 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
+      # --- Expert additions --------------------------------------------------
+      - key: PYTHONUNBUFFERED
+        value: "1"               # Ensures stdout/stderr flush immediately
+      - key: GUNICORN_CMD_ARGS
+        value: "--workers=2 --threads=4" # Tune based on CPU cores
+      # ----------------------------------------------------------------------
 
   # Service 4: The Celery Worker
   # This service runs the background tasks.
@@ -98,6 +120,11 @@ services:
 
     # The command to start the Celery worker.
     startCommand: "celery -A celery_worker.celery worker --loglevel=info"
+
+    # --- Expert additions ----------------------------------------------------
+    autoDeploy: true
+    branch: main
+    # ------------------------------------------------------------------------
 
     envVars:
       - key: FLASK_CONFIG
@@ -138,3 +165,7 @@ services:
         sync: false
       - key: SENTRY_DSN # For error tracking
         sync: false
+      # --- Expert additions --------------------------------------------------
+      - key: CELERY_CONCURRENCY
+        value: "4"               # Adjust based on CPU/memory
+      # ----------------------------------------------------------------------
