@@ -25,16 +25,14 @@ services:
     runtime: docker
     region: oregon # Make sure this matches your database region
     plan: free # Can be upgraded to 'starter' later if you need more resources
-    
+
     # This tells Render what to check to see if your app is healthy and running.
     healthCheckPath: /healthz
-    
-    # This command runs on every new deploy, BEFORE the new version goes live.
-    # This is the perfect place to run database migrations.
-    # The start command is now handled by the ENTRYPOINT in the Dockerfile,
-    # which ensures migrations run before the server starts.
 
-    # This section defines the environment variables for your web service.
+    # This command runs on every new deploy. It installs dependencies and then
+    # runs the database migrations to ensure the schema is up-to-date.
+    buildCommand: "pip install -r requirements.txt && flask db upgrade"
+
     envVars:
       - key: SERVICE_TYPE
         value: web
@@ -44,7 +42,7 @@ services:
       - key: FLASK_APP
         value: app
       
-      # This is the MAGIC line. It links the database to the web service.
+      # This links the database to the web service.
       # It takes the connection string from the 'ai-genesis-db' service defined above
       # and makes it available to our app as the 'DATABASE_URL' environment variable.
       - fromDatabase:
@@ -96,66 +94,13 @@ services:
     plan: free
 
     # The command to start the Celery worker.
-    # This now points to the 'celery' object within our configured app instance
-    # defined in celery_worker.py, ensuring it loads the full app config.
     startCommand: "celery -A celery_worker.celery worker --loglevel=info"
 
     envVars:
       - key: FLASK_CONFIG
         value: prod
-      - key: FLASK_APP
-        value: app
       - fromDatabase:
           name: ai-genesis-dbnew
-<<<<<<< HEAD
-          property: connectionString
-        key: DATABASE_URL
-      - fromService:
-          type: redis
-          name: ai-genesis-redis
-          property: connectionString
-        key: CELERY_BROKER_URL
-      - fromService:
-          type: redis
-          name: ai-genesis-redis
-          property: connectionString
-        key: CELERY_RESULT_BACKEND
-      - key: SECRET_KEY
-        sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PRICE_ID
-        sync: false
-<<<<<<< HEAD
-=======
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: GOOGLE_API_KEY
-        sync: false
-      - key: HF_API_KEY
-        sync: false
-      - key: SERPER_API_KEY
-        sync: false
-      - key: SENTRY_DSN
-        sync: false
-
-  # Service 5: Database Migrations Job
-  # This is a one-off job that runs on every new deploy to apply database changes.
-  - type: job
-    name: ai-genesis-migrations
-    runtime: docker
-    startCommand: "flask db upgrade"
-    envVars:
-      - key: FLASK_CONFIG
-        value: prod
-      - fromDatabase:
-          name: ai-genesis-db
-=======
->>>>>>> f35751b (Initial commit)
           property: connectionString
         key: DATABASE_URL
       - fromService:
@@ -187,5 +132,5 @@ services:
         sync: false
       - key: SERPER_API_KEY
         sync: false
-      - key: SENTRY_DSN
+      - key: SENTRY_DSN # For error tracking
         sync: false
