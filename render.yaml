@@ -36,6 +36,8 @@ services:
 
     # This section defines the environment variables for your web service.
     envVars:
+      - key: SERVICE_TYPE
+        value: web
       # This forces Flask to run in a production-ready mode.
       - key: FLASK_CONFIG
         value: prod
