@@ -1,9 +1,14 @@
 # app/main.py
 
-from flask import Blueprint, render_template, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, jsonify
 from flask_login import current_user, login_required
 
 main = Blueprint('main', __name__)
+
+@main.route('/healthz')
+def health_check():
+    """A simple health check endpoint that doesn't hit the database."""
+    return jsonify(status="ok"), 200
 
 @main.route('/')
 def index():
