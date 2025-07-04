@@ -107,6 +107,7 @@ services:
         value: app
       - fromDatabase:
           name: ai-genesis-dbnew
+<<<<<<< HEAD
           property: connectionString
         key: DATABASE_URL
       - fromService:
@@ -153,6 +154,8 @@ services:
         value: prod
       - fromDatabase:
           name: ai-genesis-db
+=======
+>>>>>>> f35751b (Initial commit)
           property: connectionString
         key: DATABASE_URL
       - fromService:

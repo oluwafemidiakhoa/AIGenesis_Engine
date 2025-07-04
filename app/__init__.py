@@ -1,35 +1,42 @@
 # app/__init__.py
 
-from celery import Celery
-from flask import Flask, redirect, url_for, request, flash
+import os
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
 from flask_migrate import Migrate
-from flask_login import LoginManager, current_user
-from config import config # Import the final, chosen config object
-import sentry_sdk
-import os # <--- THE MISSING IMPORT IS NOW HERE
+from flask_login import LoginManager
+from celery import Celery
 
+from config import config
+
+# Conditional import for sentry
+try:
+    import sentry_sdk
+except ImportError:
+    sentry_sdk = None
+
+# Extensions
 db = SQLAlchemy()
+mail = Mail()
+migrate = Migrate()
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+
+# Celery setup
 celery = Celery(
     __name__,
     broker=os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0'),
     backend=os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
 )
-mail = Mail()
-login_manager = LoginManager()
-migrate = Migrate()
-# Set the login view so that @login_required redirects to the right page
-login_manager.login_view = 'auth.login'
 
 def create_app(config_name='dev'):
-    # Select the configuration object
     app_config = config.get(config_name, config['dev'])
-    
-    # Create the app, telling it where the instance folder is
+
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(app_config)
 
+<<<<<<< HEAD
     # Initialize Sentry if a DSN is provided and looks valid.
     # This prevents the app from crashing if the env var is set to an empty or invalid string.
     sentry_dsn = app.config.get('SENTRY_DSN')
@@ -37,20 +44,33 @@ def create_app(config_name='dev'):
         sentry_sdk.init(
             dsn=sentry_dsn,
             # Enable performance monitoring
+=======
+    # Init Sentry only in production or when DSN is provided
+    sentry_dsn = app.config.get('SENTRY_DSN')
+    if sentry_sdk and sentry_dsn:
+        sentry_sdk.init(
+            dsn=sentry_dsn,
+>>>>>>> f35751b (Initial commit)
             enable_tracing=True,
-            # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+            traces_sample_rate=1.0
         )
 
-    # Update celery config with the Flask app's config
+    # Setup extensions
+    db.init_app(app)
+    mail.init_app(app)
+    migrate.init_app(app, db)
+    login_manager.init_app(app)
+
+    # Celery context binding
     celery.conf.update(app.config)
 
-    # This ensures that tasks run with the Flask application context.
     class ContextTask(celery.Task):
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return self.run(*args, **kwargs)
     celery.Task = ContextTask
 
+<<<<<<< HEAD
     db.init_app(app)
     mail.init_app(app)
     login_manager.init_app(app)
@@ -71,6 +91,9 @@ def create_app(config_name='dev'):
             return models.User.query.get(int(user_id))
 
     # Import and register the blueprints for our routes
+=======
+    # Register blueprints
+>>>>>>> f35751b (Initial commit)
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
@@ -85,5 +108,19 @@ def create_app(config_name='dev'):
 
     from .api import api as api_blueprint
     app.register_blueprint(api_blueprint, url_prefix='/api/v1')
+
+    # Setup user loader and import models
+    with app.app_context():
+        from . import models
+
+        @login_manager.user_loader
+        def load_user(user_id):
+            return models.User.query.get(int(user_id))
+
+        # Optional: create tables if needed (not usually used in production)
+        # db.create_all()
+
+    from .admin import admin
+    admin.init_app(app)
 
     return app

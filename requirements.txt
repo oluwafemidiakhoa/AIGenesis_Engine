@@ -37,4 +37,8 @@ pytest-mock
 sentry-sdk[flask]
 
 # Async file operations (if needed by a dependency)
+<<<<<<< HEAD
 aiofiles==24.1.0
+=======
+aiofiles==24.1.0
+>>>>>>> f35751b (Initial commit)
