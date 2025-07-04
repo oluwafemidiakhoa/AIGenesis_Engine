@@ -27,7 +27,7 @@ services:
     plan: free # Can be upgraded to 'starter' later if you need more resources
     
     # This tells Render what to check to see if your app is healthy and running.
-    healthCheckPath: /
+    healthCheckPath: /healthz
     
     # This command runs on every new deploy, BEFORE the new version goes live.
     # This is the perfect place to run database migrations.
