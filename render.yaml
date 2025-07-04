@@ -31,7 +31,9 @@ services:
     
     # This command runs on every new deploy, BEFORE the new version goes live.
     # This is the perfect place to run database migrations.
-    preDeployCommand: "./migrate.sh"
+    # preDeployCommand is not supported on the free plan. We run migrations in the startCommand instead.
+    # preDeployCommand: "./migrate.sh"
+    startCommand: "./migrate.sh && gunicorn -b 0.0.0.0:10000 wsgi:app"
 
     # This section defines the environment variables for your web service.
     envVars:
