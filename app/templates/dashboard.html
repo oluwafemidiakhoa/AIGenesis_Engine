@@ -12,7 +12,7 @@
             <p class="text-green-600 font-semibold">You have an active subscription. Thank you for your support!</p>
             <div class="mt-4">
                 <form action="{{ url_for('payments.customer_portal') }}" method="POST">
-                    <button type="submit" class="bg-gray-500 text-white font-bold rounded-md py-2 px-4 hover:bg-gray-600">Manage Subscription</button>
+                    <button type="submit" class="btn-secondary">Manage Subscription</button>
                 </form>
             </div>
             <div class="mt-6 border-t pt-6">
@@ -31,7 +31,7 @@
             <p class="text-yellow-600 font-semibold">You do not have an active subscription.</p>
             <div class="mt-4">
                 <form action="{{ url_for('payments.create_checkout_session') }}" method="POST">
-                    <button type="submit" class="bg-blue-600 text-white font-bold rounded-md py-2 px-4 hover:bg-blue-700">Upgrade Now</button>
+                    <button type="submit" class="btn-primary">Upgrade Now</button>
                 </form>
             </div>
         {% endif %}
