@@ -6,7 +6,14 @@ module.exports = {
     "./app/**/*.py"
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: {
+          500: 'rgb(14 165 233)', // Corresponds to sky-500
+          600: 'rgb(2 132 199)',  // Corresponds to sky-600
+        }
+      }
+    },
   },
   plugins: [],
 }
