@@ -1,58 +1,51 @@
 # --------------------------------------------------------------------------------
-# render.yaml — Infrastructure as Code for Render deployment
+# render.yaml — ensure Redis link and env-vars injection
 # --------------------------------------------------------------------------------
 
 services:
-  # Service 1: PostgreSQL database
+  # PostgreSQL database
   - type: db
     name: ai-genesis-dbnew
     plan: free
     postgresMajorVersion: 16
     region: oregon
 
-  # Service 2: Redis for Celery broker & result backend
+  # Redis for Celery broker & backend
   - type: redis
     name: ai-genesis-redis
     plan: free
     region: oregon
-    ipAllowList: []
 
-  # Service 3: Flask web service (production)
+  # Flask Web Service
   - type: web
     name: AI-Genesis-Engine
     runtime: docker
     region: oregon
-    plan: starter # upgrade from free for persistent runtime
+    plan: free
+
     healthCheckPath: /healthz
+
     buildCommand: "pip install -r requirements.txt"
-    
-    # Enhanced start command for logging & diagnostics
     startCommand: >
-      echo "⏳ Running DB migrations" && \
-      flask db upgrade && \
-      echo "✅ DB migrations done" && \
-      echo "🚀 Starting Gunicorn on $PORT" && \
-      exec gunicorn \
-        --log-level debug \
-        --access-logfile - \
-        --bind 0.0.0.0:$PORT \
-        wsgi:app
+      echo '⏳ Running DB migrations...' &&
+      flask db upgrade &&
+      echo '✅ DB migrations done' &&
+      echo '🚀 Starting Gunicorn...' &&
+      gunicorn --log-level info --access-logfile - --bind 0.0.0.0:$PORT wsgi:app
 
     envVars:
-      - key: SERVICE_TYPE
-        value: web
       - key: FLASK_CONFIG
         value: prod
       - key: FLASK_APP
         value: app
 
-      # Database connection provided by Render
+      # Link to Postgres
       - fromDatabase:
           name: ai-genesis-dbnew
           property: connectionString
         key: DATABASE_URL
 
-      # Redis broker & backend provided by Render
+      # Link to Redis (broker & backend)
       - fromService:
           type: redis
           name: ai-genesis-redis
@@ -64,8 +57,10 @@ services:
           property: connectionString
         key: CELERY_RESULT_BACKEND
 
-      # Application secrets (sync: false to manage via Render Dashboard)
+      # Secrets (set these in the Render dashboard under Environment)
       - key: SECRET_KEY
+        sync: false
+      - key: SENTRY_DSN
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
@@ -83,17 +78,18 @@ services:
         sync: false
       - key: SERPER_API_KEY
         sync: false
-      - key: SENTRY_DSN
-        sync: false
 
-  # Service 4: Celery worker for background tasks
+  # Celery Worker for background tasks
   - type: worker
     name: ai-genesis-worker
     runtime: docker
     region: oregon
     plan: free
 
-    startCommand: "celery -A celery_worker.celery worker --loglevel=info"
+    startCommand: >
+      echo '🔄 Starting Celery worker...' &&
+      celery -A celery_worker.celery worker --loglevel=info
+
     envVars:
       - key: FLASK_CONFIG
         value: prod
@@ -115,23 +111,9 @@ services:
         key: CELERY_RESULT_BACKEND
       - key: SECRET_KEY
         sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_PRICE_ID
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
       - key: OPENAI_API_KEY
-        sync: false
-      - key: GOOGLE_API_KEY
-        sync: false
-      - key: HF_API_KEY
-        sync: false
-      - key: SERPER_API_KEY
         sync: false
       - key: SENTRY_DSN
         sync: false
 
-# End of render.yaml
+# End of render.yaml, commit & push to apply.
