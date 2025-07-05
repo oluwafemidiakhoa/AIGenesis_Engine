@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <!-- Hero Section -->
+    <div class="text-center">
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-gray-900">
+            Unleash Your Creativity with the <span class="text-primary-600">AI Genesis Engine</span>
+        </h1>
+        <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">
+            Stop wrestling with complex tools. Our platform provides the building blocks for your next great project, powered by cutting-edge AI.
+        </p>
+        <div class="mt-8">
+            <a href="{{ url_for('auth.register') }}" class="btn-primary text-lg">Get Started for Free</a>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="mt-16">
+        <h2 class="text-3xl font-bold text-center mb-10">How Our App Works</h2>
+        <div class="grid md:grid-cols-3 gap-8 text-center">
+            <!-- Feature 1 -->
+            <div class="bg-white p-8 rounded-lg shadow-sm">
+                <div class="bg-blue-100 text-primary-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                    <!-- Placeholder for an icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Instant Idea Generation</h3>
+                <p class="text-gray-600">Describe your concept, and our AI will generate a structured project plan in seconds.</p>
+            </div>
+            <!-- Feature 2 -->
+            <div class="bg-white p-8 rounded-lg shadow-sm">
+                <div class="bg-blue-100 text-primary-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Automated Code Scaffolding</h3>
+                <p class="text-gray-600">From APIs to UI components, get boilerplate code that's clean, efficient, and ready to customize.</p>
+            </div>
+            <!-- Feature 3 -->
+            <div class="bg-white p-8 rounded-lg shadow-sm">
+                <div class="bg-blue-100 text-primary-600 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Seamless Deployment</h3>
+                <p class="text-gray-600">Integrate with your favorite hosting providers and deploy your new application with a single click.</p>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
