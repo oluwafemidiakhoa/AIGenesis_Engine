@@ -1,50 +1,44 @@
-# render.yaml (v3) — logging‑enhanced start command & clear env‑var placeholders
-# This file defines the "Infrastructure as Code" for your application on Render.
-# Update: added explicit logging to the web service startCommand so deploy logs reveal
-# which step fails (DB migrations vs. Gunicorn launch).
+# --------------------------------------------------------------------------------
+# render.yaml — Infrastructure as Code for Render deployment
+# --------------------------------------------------------------------------------
 
 services:
-  # ---------------------------------------------------------------------------
-  # Service 1: PostgreSQL
-  # ---------------------------------------------------------------------------
+  # Service 1: PostgreSQL database
   - type: db
     name: ai-genesis-dbnew
     plan: free
     postgresMajorVersion: 16
-    region: oregon          # Keep region aligned across all services
+    region: oregon
 
-  # ---------------------------------------------------------------------------
-  # Service 2: Redis (Celery broker/result backend)
-  # ---------------------------------------------------------------------------
+  # Service 2: Redis for Celery broker & result backend
   - type: redis
     name: ai-genesis-redis
     plan: free
     region: oregon
-    ipAllowList: []         # Allows other services in the account to connect
+    ipAllowList: []
 
-  # ---------------------------------------------------------------------------
-  # Service 3: Flask / Gunicorn Web Service
-  # ---------------------------------------------------------------------------
+  # Service 3: Flask web service (production)
   - type: web
     name: AI-Genesis-Engine
-    runtime: docker         # Built via Dockerfile in repo root
+    runtime: docker
     region: oregon
-    plan: free              # Upgrade to "starter" if you need >512 MB RAM
-
-    healthCheckPath: /healthz   # Route must return HTTP 200 (see app.py)
-
-    buildCommand: "pip install -r requirements.txt"  # Docker copies reqs; this re‑confirms deps
-
-    # Added verbose logging around each phase so Render logs show progress
+    plan: starter # upgrade from free for persistent runtime
+    healthCheckPath: /healthz
+    buildCommand: "pip install -r requirements.txt"
+    
+    # Enhanced start command for logging & diagnostics
     startCommand: >
-      echo '⏳ Running DB migrations…' && \
+      echo "⏳ Running DB migrations" && \
       flask db upgrade && \
-      echo '✅ DB migrations done' && \
-      echo '🚀 Starting Gunicorn on $PORT' && \
-      gunicorn --log-level debug --access-logfile - --bind 0.0.0.0:$PORT wsgi:app
+      echo "✅ DB migrations done" && \
+      echo "🚀 Starting Gunicorn on $PORT" && \
+      exec gunicorn \
+        --log-level debug \
+        --access-logfile - \
+        --bind 0.0.0.0:$PORT \
+        wsgi:app
 
     envVars:
-      # --- Fixed values ---
       - key: SERVICE_TYPE
         value: web
       - key: FLASK_CONFIG
@@ -52,11 +46,13 @@ services:
       - key: FLASK_APP
         value: app
 
-      # --- From other Render services ---
+      # Database connection provided by Render
       - fromDatabase:
           name: ai-genesis-dbnew
           property: connectionString
         key: DATABASE_URL
+
+      # Redis broker & backend provided by Render
       - fromService:
           type: redis
           name: ai-genesis-redis
@@ -68,32 +64,29 @@ services:
           property: connectionString
         key: CELERY_RESULT_BACKEND
 
-      # --- Secrets you must fill manually in Render ▸ Environment tab ---
-      #    (each key set as "Secret" scope, sync:false keeps Render from overwriting)
-      - key: SECRET_KEY             # Flask session secret → generate via openssl rand -hex 32
+      # Application secrets (sync: false to manage via Render Dashboard)
+      - key: SECRET_KEY
         sync: false
-      - key: STRIPE_PUBLISHABLE_KEY # Stripe dashboard → Developers ▸ API keys ▸ Publishable
+      - key: STRIPE_PUBLISHABLE_KEY
         sync: false
-      - key: STRIPE_SECRET_KEY      # Stripe secret key (starts with sk_live_…)
+      - key: STRIPE_SECRET_KEY
         sync: false
-      - key: STRIPE_PRICE_ID        # Price ID from Stripe product (price_…)
+      - key: STRIPE_PRICE_ID
         sync: false
-      - key: STRIPE_WEBHOOK_SECRET  # Stripe CLI: stripe listen --forward-to …
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
-      - key: OPENAI_API_KEY         # OpenAI dashboard ▸ API keys
+      - key: OPENAI_API_KEY
         sync: false
-      - key: GOOGLE_API_KEY         # Google Cloud console ▸ APIs & Services ▸ Credentials
+      - key: GOOGLE_API_KEY
         sync: false
-      - key: HF_API_KEY             # HuggingFace token (Settings ▸ Access Tokens)
+      - key: HF_API_KEY
         sync: false
-      - key: SERPER_API_KEY         # serper.dev key (after signup)
+      - key: SERPER_API_KEY
         sync: false
-      - key: SENTRY_DSN             # Sentry project settings ▸ DSN
+      - key: SENTRY_DSN
         sync: false
 
-  # ---------------------------------------------------------------------------
-  # Service 4: Celery Worker
-  # ---------------------------------------------------------------------------
+  # Service 4: Celery worker for background tasks
   - type: worker
     name: ai-genesis-worker
     runtime: docker
@@ -101,7 +94,6 @@ services:
     plan: free
 
     startCommand: "celery -A celery_worker.celery worker --loglevel=info"
-
     envVars:
       - key: FLASK_CONFIG
         value: prod
@@ -121,11 +113,25 @@ services:
           name: ai-genesis-redis
           property: connectionString
         key: CELERY_RESULT_BACKEND
-
-      # Same manual secrets as web service (optional for worker unless used)
       - key: SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: HF_API_KEY
+        sync: false
+      - key: SERPER_API_KEY
+        sync: false
       - key: SENTRY_DSN
         sync: false
+
+# End of render.yaml
