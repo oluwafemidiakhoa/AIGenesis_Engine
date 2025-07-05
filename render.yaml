@@ -1,16 +1,16 @@
 # --------------------------------------------------------------------------------
-# render.yaml — Infrastructure as Code for Render
+# render.yaml — injecting Redis URLs into web & worker
 # --------------------------------------------------------------------------------
 
 services:
-  # PostgreSQL database
+  # PostgreSQL
   - type: db
     name: ai-genesis-dbnew
     plan: free
     postgresMajorVersion: 16
     region: oregon
 
-  # Redis for Celery broker & backend
+  # Redis for Celery
   - type: redis
     name: ai-genesis-redis
     plan: free
@@ -39,13 +39,13 @@ services:
       - key: FLASK_APP
         value: app
 
-      # Link to Postgres
+      # Postgres link
       - fromDatabase:
           name: ai-genesis-dbnew
           property: connectionString
         key: DATABASE_URL
 
-      # Link to Redis (broker & backend)
+      # Redis link for Celery tasks
       - fromService:
           type: redis
           name: ai-genesis-redis
@@ -57,10 +57,10 @@ services:
           property: connectionString
         key: CELERY_RESULT_BACKEND
 
-      # Secrets (add these in the Dashboard → Environment)
-      - key: SECRET_KEY
+      # Secrets (define in Dashboard → Environment)
+      - key: SECRET_KEY         # your Flask secret
         sync: false
-      - key: SENTRY_DSN
+      - key: SENTRY_DSN         # Sentry DSN
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
@@ -79,7 +79,7 @@ services:
       - key: SERPER_API_KEY
         sync: false
 
-  # Celery Worker for background tasks
+  # Celery Worker Service
   - type: worker
     name: ai-genesis-worker
     runtime: docker
@@ -95,10 +95,14 @@ services:
         value: prod
       - key: FLASK_APP
         value: app
+
+      # Postgres link
       - fromDatabase:
           name: ai-genesis-dbnew
           property: connectionString
         key: DATABASE_URL
+
+      # Redis link for both broker & backend
       - fromService:
           type: redis
           name: ai-genesis-redis
@@ -109,6 +113,8 @@ services:
           name: ai-genesis-redis
           property: connectionString
         key: CELERY_RESULT_BACKEND
+
+      # Secrets
       - key: SECRET_KEY
         sync: false
       - key: OPENAI_API_KEY
