@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------
-# render.yaml — ensure Redis link and env-vars injection
+# render.yaml — Infrastructure as Code for Render
 # --------------------------------------------------------------------------------
 
 services:
@@ -57,7 +57,7 @@ services:
           property: connectionString
         key: CELERY_RESULT_BACKEND
 
-      # Secrets (set these in the Render dashboard under Environment)
+      # Secrets (add these in the Dashboard → Environment)
       - key: SECRET_KEY
         sync: false
       - key: SENTRY_DSN
@@ -115,5 +115,3 @@ services:
         sync: false
       - key: SENTRY_DSN
         sync: false
-
-# End of render.yaml, commit & push to apply.
