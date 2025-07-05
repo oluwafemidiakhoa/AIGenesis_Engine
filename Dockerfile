@@ -1,51 +1,59 @@
 # --------------------------------------------------------------------------------
-# Stage 1 – Frontend build
+# Stage 1 — Frontend build
 # --------------------------------------------------------------------------------
 FROM node:18-slim AS frontend-builder
 
-# Install runtime + dev dependencies required for the asset pipeline (e.g. Tailwind)
+# Noninteractive (in case you need extra tooling later)
+ENV DEBIAN_FRONTEND=noninteractive
+
 WORKDIR /app
 
-# Copy package manifests first so we can leverage Docker layer‑cache
+# Copy lockfiles first to leverage layer cache
 COPY package*.json ./
-# Use deterministic installs; **do NOT omit dev dependencies** because Tailwind is
-# typically defined as a devDependency and is required at build‑time.
+
+# Install all deps (including devDeps so CLI tools like Tailwind/Vite are available)
 RUN npm ci
 
-# Copy the remainder of the source and build the static assets.
+# Copy source and build static assets
 COPY . .
-# Runs whatever `"build"` targets you defined (e.g., Tailwind, Vite, React).
 RUN npm run build
 
 # --------------------------------------------------------------------------------
-# Stage 2 – Python runtime
+# Stage 2 — Python runtime
 # --------------------------------------------------------------------------------
 FROM python:3.10-slim
 
-WORKDIR /app
-
-# Basic runtime env flags
+# Prevent Python from writing .pyc files & enable unbuffered logs
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    FLASK_CONFIG=prod \
-    PATH="/home/nonroot/.local/bin:${PATH}"
+    FLASK_CONFIG=prod
 
-# Create a non‑privileged user
+WORKDIR /app
+
+# Create a non-root user for security
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 
-# Python deps
+# Copy and install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
 
-# Runtime directories + permissions before switching to non‑root
-RUN mkdir /app/instance && chown nonroot:nonroot /app/instance
+# Create instance folder (used by Flask) and set permissions
+RUN mkdir /app/instance \
+ && chown nonroot:nonroot /app/instance
 
-# Copy application code and pre‑built static assets
+# Copy application code and built frontend assets, set ownership to nonroot
 COPY --chown=nonroot:nonroot . .
-COPY --from=frontend-builder --chown=nonroot:nonroot /app/app/static/css/output.css ./app/static/css/output.css
+COPY --from=frontend-builder --chown=nonroot:nonroot \
+    /app/app/static/css/output.css \
+    ./app/static/css/output.css
 
+# Switch to non-root user
 USER nonroot
 
-# Healthcheck keeps Render/K8s happy and catches crash‑loops early
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -f http://localhost:5000/healthz || exit 1
+# Healthcheck so Docker (and Render, if it inspects) can verify readiness
+HEALTHCHECK --interval=30s --timeout=5s \
+  CMD wget --quiet --spider http://localhost:${PORT:-5000}/healthz || exit 1
+
+# Note: Render overrides this via its Start Command (see render.yaml)
+CMD ["bash", "-lc", "flask db upgrade && gunicorn --bind 0.0.0.0:$PORT wsgi:app"]
