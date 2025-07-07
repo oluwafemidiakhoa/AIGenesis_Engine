@@ -1,22 +1,25 @@
 import os
 from app import create_app, celery
 
-# Determine the configuration (development, production, testing)
+# Set the Flask configuration (e.g., 'dev', 'prod', 'test')
 config_name = os.getenv('FLASK_CONFIG', 'prod')
 
-# Create Flask application and push its context for Celery tasks
+# Create the Flask app and push the app context for Celery to use
 app = create_app(config_name)
 app.app_context().push()
 
-# Configure Celery with Redis broker and result backend from environment
+# Retrieve Redis connection URL from environment (Render internal Key Value URL)
+redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
+# Update Celery configuration
 celery.conf.update(
-    broker_url=os.environ.get('CELERY_BROKER_URL'),
-    result_backend=os.environ.get('CELERY_RESULT_BACKEND')
+    broker_url=redis_url,
+    result_backend=redis_url
 )
 
-# Optional: Import tasks so they are registered with Celery
+# Optionally import tasks here to ensure they are registered
 # from app.tasks import *  # noqa
 
 if __name__ == '__main__':
-    # Start the worker for local debugging: celery -A celery_worker worker --loglevel=info
+    # Run Celery worker: Used mainly for local testing
     celery.start()
